@@ -9,6 +9,7 @@ export default class GameEngine {
     this.renderer.setSize(window.innerWidth, window.innerHeight)
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
     this.renderer.shadowMap.enabled = true
+    this.renderer.setClearColor(0x000000, 0)
 
     if (container) {
       container.appendChild(this.renderer.domElement)

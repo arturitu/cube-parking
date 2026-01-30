@@ -25,7 +25,7 @@ const LevelProgress = () => {
               relative w-11 h-11 md:w-14 md:h-14 rounded-md flex flex-col items-center justify-center transition-all border flex-shrink-0
               ${
                 isSelected
-                  ? 'bg-brandRed border-brandRed shadow-xl shadow-brandRed text-white scale-110 z-10'
+                  ? 'bg-brandRed border-brandRed shadow-lg shadow-brandRed text-white scale-110 z-10'
                   : isLocked
                   ? 'bg-brandDark/40 border-white/5 opacity-20 cursor-not-allowed'
                   : 'bg-white/5 border-white/10 hover:border-brandGold/50 hover:bg-white/10'

@@ -7,7 +7,7 @@ const RestartButton = () => {
     <div className="w-full flex justify-end px-6 md:px-12">
       <button
         onClick={resetLevel}
-        className="pointer-events-auto flex items-center gap-2 md:gap-3 px-5 md:px-8 py-2.5 md:py-3.5 rounded-full bg-brandRed hover:bg-brandRed/90 transition-all text-[10px] md:text-[11px] font-black uppercase tracking-[0.2em] text-white shadow-xl shadow-brandRed/20 group"
+        className="pointer-events-auto flex items-center gap-2 md:gap-3 px-5 md:px-8 py-2.5 md:py-3.5 rounded-full bg-brandRed hover:bg-brandRed/90 transition-all text-[10px] md:text-[11px] font-black uppercase tracking-[0.2em] text-white shadow-lg shadow-brandRed/20 group"
       >
         <span className="hidden xs:inline">Restart Level</span>
         <span className="xs:hidden">Restart</span>
