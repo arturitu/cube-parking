@@ -153,6 +153,11 @@ export default class GameEngine {
       (state) => state.currentLevelIndex,
       () => this.initLevel()
     )
+
+    this.unsubscribeReset = useStore.subscribe(
+      (state) => state.resetToken,
+      () => this.initLevel()
+    )
   }
 
   setupListeners() {
@@ -336,6 +341,7 @@ export default class GameEngine {
     window.removeEventListener('pointermove', this.onPointerMove)
     window.removeEventListener('pointerup', this.onPointerUp)
     if (this.unsubscribeLevel) this.unsubscribeLevel()
+    if (this.unsubscribeReset) this.unsubscribeReset()
     this.renderer.setAnimationLoop(null)
     this.renderer.dispose()
   }

@@ -8,9 +8,29 @@ const UI = () => {
   const gameWon = useStore((state) => state.gameWon)
   const setCurrentLevel = useStore((state) => state.setCurrentLevel)
   const resetLevel = useStore((state) => state.resetLevel)
+  const clearProgress = useStore((state) => state.clearProgress)
 
   const currentLevel = levelsData[currentLevelIndex]
   const totalStars = stars.reduce((a, b) => a + b, 0)
+  const isPerfectScore = totalStars === 25
+  const isEndScreen =
+    currentLevelIndex === levelsData.length - 1 || isPerfectScore
+
+  const getRankMessage = (score) => {
+    if (score === 25) return 'MASTER! PERFECT SCORE'
+    if (score >= 20) return 'EXCELLENT WORK'
+    if (score >= 15) return 'GOOD JOB, KEEP GOING'
+    return 'YOU CAN DO IT BETTER'
+  }
+
+  const handleRetry = () => {
+    const firstIncomplete = stars.findIndex((s) => s < 5)
+    if (firstIncomplete !== -1) {
+      setCurrentLevel(firstIncomplete)
+    } else {
+      resetLevel()
+    }
+  }
 
   return (
     <div className="fixed inset-0 pointer-events-none select-none flex flex-col p-8 text-white font-sans">
@@ -103,8 +123,14 @@ const UI = () => {
       {gameWon && (
         <div className="fixed inset-0 bg-brandDark/80 flex items-center justify-center pointer-events-auto backdrop-blur-sm">
           <div className="text-center">
-            <h2 className="text-5xl font-black italic mb-2">LEVEL CLEAR!</h2>
-            <div className="flex justify-center gap-2 mb-8">
+            <h2 className="text-5xl font-black italic mb-2">
+              {isPerfectScore
+                ? 'GAME FINISHED!'
+                : isEndScreen
+                ? 'FINAL LEVEL CLEAR!'
+                : 'LEVEL CLEAR!'}
+            </h2>
+            <div className="flex justify-center gap-2 mb-4">
               {[...Array(5)].map((_, i) => (
                 <div
                   key={i}
@@ -119,20 +145,57 @@ const UI = () => {
                 </div>
               ))}
             </div>
-            <button
-              onClick={() => {
-                if (currentLevelIndex < levelsData.length - 1) {
-                  setCurrentLevel(currentLevelIndex + 1)
-                } else {
-                  setCurrentLevel(0)
+
+            {isEndScreen && (
+              <div className="mb-8">
+                <div className="text-3xl font-black text-brandGold mb-1">
+                  {totalStars} / 25
+                </div>
+                <div className="text-sm font-bold tracking-[0.2em] opacity-80 uppercase">
+                  {getRankMessage(totalStars)}
+                </div>
+              </div>
+            )}
+
+            {!isEndScreen && <div className="mb-8" />}
+
+            <div className="flex flex-col gap-3 items-center">
+              <button
+                onClick={() => {
+                  if (isPerfectScore) {
+                    // Do nothing, handled by Start New Game
+                  } else if (isEndScreen) {
+                    handleRetry()
+                  } else {
+                    setCurrentLevel(currentLevelIndex + 1)
+                  }
+                }}
+                className={
+                  'px-12 py-4 bg-brandRed rounded-full font-black uppercase tracking-widest shadow-xl hover:scale-105 transition-all text-sm ' +
+                  (isPerfectScore ? 'hidden' : 'block')
                 }
-              }}
-              className="px-12 py-4 bg-brandRed rounded-full font-black uppercase tracking-widest shadow-xl hover:scale-105 transition-all"
-            >
-              {currentLevelIndex < levelsData.length - 1
-                ? 'Next Level'
-                : 'Play Again'}
-            </button>
+              >
+                {isEndScreen ? 'Retry for more Stars' : 'Next Level'}
+              </button>
+
+              {isEndScreen && !isPerfectScore && (
+                <button
+                  onClick={() => clearProgress()}
+                  className="px-8 py-2 text-white/50 hover:text-white font-bold uppercase tracking-widest text-[10px] transition-all"
+                >
+                  Start New Game (Clear Progress)
+                </button>
+              )}
+
+              {isPerfectScore && (
+                <button
+                  onClick={() => clearProgress()}
+                  className="px-12 py-4 bg-white/10 hover:bg-white/20 rounded-full font-black uppercase tracking-widest transition-all text-sm border border-white/20"
+                >
+                  Start New Game
+                </button>
+              )}
+            </div>
           </div>
         </div>
       )}

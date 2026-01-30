@@ -9,6 +9,7 @@ const useStore = create(
     completedLevels: [],
     gameStarted: false,
     gameWon: false,
+    resetToken: 0,
 
     setCurrentLevel: (index) => {
       set({
@@ -19,17 +20,28 @@ const useStore = create(
       })
     },
 
+    clearProgress: () => {
+      set({
+        currentLevelIndex: 0,
+        moves: 0,
+        stars: [0, 0, 0, 0, 0],
+        completedLevels: [],
+        gameWon: false,
+        gameStarted: false,
+        resetToken: get().resetToken + 1,
+      })
+    },
+
     incrementMoves: () => {
       set((state) => ({ moves: state.moves + 1 }))
     },
 
     resetLevel: () => {
-      const { currentLevelIndex } = get()
-      set({
-        currentLevelIndex,
+      set((state) => ({
         moves: 0,
         gameWon: false,
-      })
+        resetToken: state.resetToken + 1,
+      }))
     },
 
     completeLevel: (moves, idealMoves) => {
@@ -47,9 +59,7 @@ const useStore = create(
       }
 
       const newStars = [...stars]
-      if (earnedStars > newStars[currentLevelIndex]) {
-        newStars[currentLevelIndex] = earnedStars
-      }
+      newStars[currentLevelIndex] = earnedStars
 
       const newCompletedLevels = [...completedLevels]
       if (!newCompletedLevels.includes(currentLevelIndex)) {
