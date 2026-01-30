@@ -70,7 +70,7 @@ export default class GameEngine {
 
     // Create Board
     const boardGeo = new THREE.BoxGeometry(width, 0.5, height)
-    const boardMat = new THREE.MeshStandardMaterial({ color: '#3d343b' })
+    const boardMat = new THREE.MeshStandardMaterial({ color: '#32292f' })
     const board = new THREE.Mesh(boardGeo, boardMat)
     board.position.y = -0.25
     board.receiveShadow = true

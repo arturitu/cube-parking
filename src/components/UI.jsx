@@ -17,9 +17,9 @@ const UI = () => {
       {/* Header */}
       <div className="flex justify-between items-center w-full">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-[#c52233] rounded-sm rotate-12" />
+          <div className="w-8 h-8 bg-brandRed rounded-sm rotate-12" />
           <h1 className="text-2xl font-black tracking-tighter italic">
-            VIBE<span className="text-[#c52233]">PARKING</span>
+            VIBE<span className="text-brandRed">PARKING</span>
           </h1>
         </div>
         <div className="text-right">
@@ -27,7 +27,7 @@ const UI = () => {
             Total Stars
           </div>
           <div className="text-2xl font-black">
-            <span className="text-[#f1c40f]">{totalStars}</span>
+            <span className="text-brandGold">{totalStars}</span>
             <span className="opacity-30"> / 25</span>
           </div>
         </div>
@@ -45,7 +45,7 @@ const UI = () => {
               className={
                 'relative w-12 h-12 rounded-xl flex items-center justify-center font-bold transition-all ' +
                 (isSelected
-                  ? 'bg-[#c52233] scale-110 shadow-lg'
+                  ? 'bg-brandRed scale-110 shadow-lg'
                   : 'bg-white/10 hover:bg-white/20')
               }
             >
@@ -55,7 +55,7 @@ const UI = () => {
                   {[...Array(levelStars)].map((_, i) => (
                     <div
                       key={i}
-                      className="w-1 h-1 rounded-full bg-[#f1c40f]"
+                      className="w-1 h-1 rounded-full bg-brandGold"
                     />
                   ))}
                 </div>
@@ -66,7 +66,7 @@ const UI = () => {
       </div>
 
       {/* Level Info */}
-      <div className="mt-20 w-64 p-6 rounded-2xl bg-black/20 border border-white/5 backdrop-blur-md">
+      <div className="mt-20 w-64 p-6 rounded-2xl bg-brandDark/20 border border-white/5 backdrop-blur-md">
         <div className="text-[10px] uppercase tracking-widest opacity-50 font-bold mb-1">
           Level {currentLevel.id}
         </div>
@@ -76,7 +76,7 @@ const UI = () => {
           <div className="text-[10px] uppercase tracking-widest opacity-50 font-bold">
             Moves
           </div>
-          <div className="text-xl font-black text-[#c52233]">{moves}</div>
+          <div className="text-xl font-black text-brandRed">{moves}</div>
         </div>
 
         <div className="flex justify-between items-center">
@@ -101,7 +101,7 @@ const UI = () => {
 
       {/* Win Overlay */}
       {gameWon && (
-        <div className="fixed inset-0 bg-black/80 flex items-center justify-center pointer-events-auto backdrop-blur-sm">
+        <div className="fixed inset-0 bg-brandDark/80 flex items-center justify-center pointer-events-auto backdrop-blur-sm">
           <div className="text-center">
             <h2 className="text-5xl font-black italic mb-2">LEVEL CLEAR!</h2>
             <div className="flex justify-center gap-2 mb-8">
@@ -111,7 +111,7 @@ const UI = () => {
                   className={
                     'text-4xl ' +
                     (i < stars[currentLevelIndex]
-                      ? 'text-[#f1c40f]'
+                      ? 'text-brandGold'
                       : 'text-white/10')
                   }
                 >
@@ -127,7 +127,7 @@ const UI = () => {
                   setCurrentLevel(0)
                 }
               }}
-              className="px-12 py-4 bg-[#c52233] rounded-full font-black uppercase tracking-widest shadow-xl hover:scale-105 transition-all"
+              className="px-12 py-4 bg-brandRed rounded-full font-black uppercase tracking-widest shadow-xl hover:scale-105 transition-all"
             >
               {currentLevelIndex < levelsData.length - 1
                 ? 'Next Level'
