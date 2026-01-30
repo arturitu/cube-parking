@@ -4,7 +4,7 @@ import tailwindcss from '@tailwindcss/vite'
 import fs from 'fs'
 
 export default defineConfig({
-  base: './',
+  base: '/cube-parking/',
   plugins: [react(), tailwindcss()],
   server: {
     https: {
