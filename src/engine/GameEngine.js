@@ -1,6 +1,7 @@
 import * as THREE from 'three'
 import useStore from '../store/useStore'
 import { levelsData } from '../data/levelsData'
+import Block from './Block'
 
 export default class GameEngine {
   constructor(container) {
@@ -57,7 +58,6 @@ export default class GameEngine {
     const levelIndex = state.currentLevelIndex
     const level = levelsData[levelIndex]
 
-    // Clear previous level
     if (this.boardGroup) {
       this.scene.remove(this.boardGroup)
     }
@@ -153,55 +153,11 @@ export default class GameEngine {
     }
 
     // Create Blocks
-    this.blocks = []
-    level.blocks.forEach((blockData) => {
-      const block = this.createBlock(blockData)
-      this.boardGroup.add(block)
-      this.blocks.push(block)
+    this.blocks = level.blocks.map((data) => {
+      const block = new Block(data, this.gridWidth, this.gridHeight)
+      this.boardGroup.add(block.group)
+      return block
     })
-  }
-
-  createBlock(data) {
-    const { length, orientation, color, x, y } = data
-    const isHorizontal = orientation === 'horizontal'
-
-    const group = new THREE.Group()
-
-    const w = isHorizontal ? length : 0.95
-    const h = 0.95
-    const d = isHorizontal ? 0.95 : length
-
-    const geo = new THREE.BoxGeometry(w, h, d)
-    const mat = new THREE.MeshStandardMaterial({ color })
-    const mesh = new THREE.Mesh(geo, mat)
-
-    mesh.castShadow = true
-    mesh.receiveShadow = true
-    group.add(mesh)
-
-    // Position the Group
-    group.position.x =
-      x - this.gridWidth / 2 + (isHorizontal ? length / 2 : 0.5)
-    group.position.y = 0.5
-    group.position.z =
-      y - this.gridHeight / 2 + (isHorizontal ? 0.5 : length / 2)
-
-    group.userData = { ...data }
-
-    // Visual direction indicator (Handle/Stripe)
-    const indicatorGeo = isHorizontal
-      ? new THREE.BoxGeometry(length * 0.8, 0.1, 0.1)
-      : new THREE.BoxGeometry(0.1, 0.1, length * 0.8)
-    const indicatorMat = new THREE.MeshStandardMaterial({
-      color: '#ffffff',
-      transparent: true,
-      opacity: 0.3,
-    })
-    const indicator = new THREE.Mesh(indicatorGeo, indicatorMat)
-    indicator.position.y = 0.51
-    group.add(indicator)
-
-    return group
   }
 
   setupStoreSubscriptions() {
@@ -228,14 +184,16 @@ export default class GameEngine {
       this.mouse.y = -(e.clientY / window.innerHeight) * 2 + 1
 
       this.raycaster.setFromCamera(this.mouse, this.camera)
-      const intersects = this.raycaster.intersectObjects(this.blocks, true)
+      const blockGroups = this.blocks.map((b) => b.group)
+      const intersects = this.raycaster.intersectObjects(blockGroups, true)
 
       if (intersects.length > 0) {
-        let block = intersects[0].object
-        // Find the parent group which is in our blocks array
-        while (block && !this.blocks.includes(block)) {
-          block = block.parent
+        let object = intersects[0].object
+        while (object && !blockGroups.includes(object)) {
+          object = object.parent
         }
+
+        const block = this.blocks.find((b) => b.group === object)
 
         if (block) {
           this.selectedBlock = block
@@ -243,14 +201,18 @@ export default class GameEngine {
 
           const intersection = new THREE.Vector3()
           this.raycaster.ray.intersectPlane(this.dragPlane, intersection)
-          this.dragOffset.copy(intersection).sub(this.selectedBlock.position)
-          this.initialBlockPos.copy(this.selectedBlock.position)
+          this.dragOffset
+            .copy(intersection)
+            .sub(this.selectedBlock.group.position)
+          this.initialBlockPos.copy(this.selectedBlock.group.position)
         }
       }
     }
 
     this.onPointerMove = (e) => {
-      if (!this.isDragging || !this.selectedBlock) return
+      if (!this.isDragging || !this.selectedBlock) {
+        return
+      }
 
       this.mouse.x = (e.clientX / window.innerWidth) * 2 - 1
       this.mouse.y = -(e.clientY / window.innerHeight) * 2 + 1
@@ -265,43 +227,12 @@ export default class GameEngine {
 
     this.onPointerUp = () => {
       if (this.selectedBlock) {
-        // Snap to grid
-        const newX = Math.round(
-          this.selectedBlock.position.x +
-            this.gridWidth / 2 -
-            (this.selectedBlock.userData.orientation === 'horizontal'
-              ? this.selectedBlock.userData.length / 2
-              : 0.5)
-        )
-        const newZ = Math.round(
-          this.selectedBlock.position.z +
-            this.gridHeight / 2 -
-            (this.selectedBlock.userData.orientation === 'horizontal'
-              ? 0.5
-              : this.selectedBlock.userData.length / 2)
-        )
+        const moved = this.selectedBlock.snapToGrid()
 
-        const oldX = this.selectedBlock.userData.x
-        const oldY = this.selectedBlock.userData.y
-
-        if (newX !== oldX || newZ !== oldY) {
+        if (moved) {
           useStore.getState().incrementMoves()
-          this.selectedBlock.userData.x = newX
-          this.selectedBlock.userData.y = newZ
-
           this.checkWin()
         }
-
-        // Re-position accurately
-        const isH = this.selectedBlock.userData.orientation === 'horizontal'
-        this.selectedBlock.position.x =
-          newX -
-          this.gridWidth / 2 +
-          (isH ? this.selectedBlock.userData.length / 2 : 0.5)
-        this.selectedBlock.position.z =
-          newZ -
-          this.gridHeight / 2 +
-          (isH ? 0.5 : this.selectedBlock.userData.length / 2)
       }
       this.selectedBlock = null
       this.isDragging = false
@@ -314,63 +245,47 @@ export default class GameEngine {
   }
 
   moveBlock(block, targetPos) {
-    const isH = block.userData.orientation === 'horizontal'
-    const len = block.userData.length
+    const isH = block.data.orientation === 'horizontal'
+    const len = block.data.length
 
     if (isH) {
       const minX = -this.gridWidth / 2 + len / 2
-      const maxX =
-        this.gridWidth / 2 - len / 2 + (block.userData.isTarget ? 2 : 0) // Allow target to exit
-      block.position.x = Math.max(minX, Math.min(maxX, targetPos.x))
-      // Check collisions
+      const maxX = this.gridWidth / 2 - len / 2 + (block.data.isTarget ? 2 : 0)
+      block.group.position.x = Math.max(minX, Math.min(maxX, targetPos.x))
       this.constrainCollision(block, 'x')
     } else {
       const minZ = -this.gridHeight / 2 + len / 2
       const maxZ = this.gridHeight / 2 - len / 2
-      block.position.z = Math.max(minZ, Math.min(maxZ, targetPos.z))
+      block.group.position.z = Math.max(minZ, Math.min(maxZ, targetPos.z))
       this.constrainCollision(block, 'z')
     }
   }
 
   constrainCollision(block, axis) {
-    // Basic collision detection with other blocks
     this.blocks.forEach((other) => {
-      if (other === block) return
+      if (other === block) {
+        return
+      }
 
-      const b1 = this.getBlockBounds(block)
-      const b2 = this.getBlockBounds(other)
+      const b1 = block.getBounds()
+      const b2 = other.getBounds()
 
       if (this.intersects(b1, b2)) {
         if (axis === 'x') {
-          if (block.position.x > other.position.x) {
-            block.position.x = b2.max.x + block.userData.length / 2
+          if (block.group.position.x > other.group.position.x) {
+            block.group.position.x = b2.max.x + block.data.length / 2
           } else {
-            block.position.x = b2.min.x - block.userData.length / 2
+            block.group.position.x = b2.min.x - block.data.length / 2
           }
         } else {
-          if (block.position.z > other.position.z) {
-            block.position.z = b2.max.z + block.userData.length / 2
+          if (block.group.position.z > other.group.position.z) {
+            block.group.position.z = b2.max.z + block.data.length / 2
           } else {
-            block.position.z = b2.min.z - block.userData.length / 2
+            block.group.position.z = b2.min.z - block.data.length / 2
           }
         }
       }
     })
-  }
-
-  getBlockBounds(block) {
-    const isH = block.userData.orientation === 'horizontal'
-    const len = block.userData.length
-    return {
-      min: {
-        x: block.position.x - (isH ? len / 2 : 0.45),
-        z: block.position.z - (isH ? 0.45 : len / 2),
-      },
-      max: {
-        x: block.position.x + (isH ? len / 2 : 0.45),
-        z: block.position.z + (isH ? 0.45 : len / 2),
-      },
-    }
   }
 
   intersects(a, b) {
@@ -384,10 +299,9 @@ export default class GameEngine {
 
   checkWin() {
     const level = levelsData[useStore.getState().currentLevelIndex]
-    const targetBlock = this.blocks.find((b) => b.userData.isTarget)
+    const targetBlock = this.blocks.find((b) => b.data.isTarget)
 
-    // Win if target block x is past grid width
-    const targetX = targetBlock.userData.x + targetBlock.userData.length
+    const targetX = targetBlock.data.x + targetBlock.data.length
     if (targetX >= this.gridWidth) {
       useStore
         .getState()
