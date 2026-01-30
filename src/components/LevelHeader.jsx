@@ -13,8 +13,13 @@ const LevelHeader = () => {
         <div className="text-[8px] md:text-[10px] uppercase tracking-widest font-black text-white/30 mb-1 md:mb-2">
           Your Moves
         </div>
-        <div className="text-4xl md:text-7xl font-black text-brandGold leading-none drop-shadow-md">
-          {moves}
+        <div className="overflow-hidden h-9 md:h-16 flex items-end">
+          <div
+            key={moves}
+            className="text-4xl md:text-7xl font-black text-brandGold leading-none drop-shadow-md animate-slide-up"
+          >
+            {moves}
+          </div>
         </div>
       </div>
 
