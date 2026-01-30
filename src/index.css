@@ -29,9 +29,9 @@ html {
 
 #root {
   min-height: 100vh;
-  background: linear-gradient(
-    to bottom,
-    var(--color-brandDark),
-    var(--color-brandBlue)
+  background: radial-gradient(
+    circle at center,
+    #3d3139 0%,
+    var(--color-brandDark) 100%
   );
 }

@@ -22,7 +22,7 @@ export default class GameEngine {
       1000
     )
     this.camera.position.set(8, 10, 8)
-    this.camera.lookAt(0, 0, 0)
+    this.camera.lookAt(0, 2, 0)
 
     this.raycaster = new THREE.Raycaster()
     this.mouse = new THREE.Vector2()
