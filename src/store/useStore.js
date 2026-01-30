@@ -4,23 +4,73 @@ import { persist, subscribeWithSelector } from 'zustand/middleware'
 const useStore = create(
   subscribeWithSelector(
     persist(
-      (set) => ({
-        avatarColor: '#2986cc',
-        setAvatarColor: (color) => {
-          set({ avatarColor: color })
+      (set, get) => ({
+        currentLevelIndex: 0,
+        moves: 0,
+        stars: [0, 0, 0, 0, 0],
+        completedLevels: [],
+        gameStarted: false,
+        gameWon: false,
+
+        setCurrentLevel: (index) => {
+          set({
+            currentLevelIndex: index,
+            moves: 0,
+            gameWon: false,
+            gameStarted: true,
+          })
         },
-        gameEnded: false,
-        setGameEnded: (value) => {
-          set({ gameEnded: value })
+
+        incrementMoves: () => {
+          set((state) => ({ moves: state.moves + 1 }))
+        },
+
+        resetLevel: () => {
+          const { currentLevelIndex } = get()
+          set({
+            currentLevelIndex,
+            moves: 0,
+            gameWon: false,
+          })
+        },
+
+        completeLevel: (moves, idealMoves) => {
+          const { currentLevelIndex, stars, completedLevels } = get()
+
+          let earnedStars = 1
+          if (moves <= idealMoves) {
+            earnedStars = 5
+          } else if (moves <= idealMoves + 2) {
+            earnedStars = 4
+          } else if (moves <= idealMoves + 4) {
+            earnedStars = 3
+          } else if (moves <= idealMoves + 6) {
+            earnedStars = 2
+          }
+
+          const newStars = [...stars]
+          if (earnedStars > newStars[currentLevelIndex]) {
+            newStars[currentLevelIndex] = earnedStars
+          }
+
+          const newCompletedLevels = [...completedLevels]
+          if (!newCompletedLevels.includes(currentLevelIndex)) {
+            newCompletedLevels.push(currentLevelIndex)
+          }
+
+          set({
+            gameWon: true,
+            stars: newStars,
+            completedLevels: newCompletedLevels,
+          })
         },
       }),
       {
-        name: 'game-store',
-        partialize: (state) => {
-          return {
-            avatarColor: state.avatarColor,
-          }
-        },
+        name: 'cube-parking-storage',
+        partialize: (state) => ({
+          stars: state.stars,
+          completedLevels: state.completedLevels,
+        }),
       }
     )
   )
