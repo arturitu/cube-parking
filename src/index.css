@@ -1,0 +1,36 @@
+@import 'tailwindcss';
+
+@theme {
+  --font-sans: 'Roboto', sans-serif;
+  --font-serif: 'Playfair Display', serif;
+
+  --color-brandDark: #32292f;
+  --color-brandRed: #c52233;
+  --color-brandExtraLight: #e6efed;
+  --color-brandLightGray: #ccdce0;
+  --color-brandGray: #817891;
+}
+
+html,
+body {
+  height: 100%;
+  color: var(--color-brandExtraLight);
+  font-family: var(--font-sans);
+  margin: 0;
+  padding: 0;
+  background-color: var(--color-brandDark);
+}
+
+html {
+  overflow: hidden;
+  position: relative;
+}
+
+#root {
+  min-height: 100vh;
+  background: linear-gradient(
+    to bottom,
+    var(--color-brandDark),
+    var(--color-brandBlue)
+  );
+}
