@@ -35,9 +35,9 @@ const WinOverlay = () => {
   }
 
   return (
-    <div className="fixed inset-0 bg-brandDark/90 flex items-center justify-center pointer-events-auto backdrop-blur-md z-50">
-      <div className="text-center max-w-md w-full px-8">
-        <h2 className="text-6xl font-black italic mb-4 tracking-tighter leading-none text-white text-center">
+    <div className="fixed inset-0 bg-brandDark/95 flex items-center justify-center pointer-events-auto backdrop-blur-md z-50">
+      <div className="text-center max-w-sm md:max-w-md w-full px-8">
+        <h2 className="text-4xl md:text-6xl font-black italic mb-4 tracking-tighter leading-[0.9] text-white text-center">
           {isPerfectScore
             ? 'GAME FINISHED!'
             : isEndScreen
@@ -45,12 +45,12 @@ const WinOverlay = () => {
             : 'LEVEL CLEAR!'}
         </h2>
 
-        <div className="flex justify-center gap-2 mb-8">
+        <div className="flex justify-center gap-1.5 md:gap-2 mb-8">
           {[...Array(5)].map((_, i) => (
             <div
               key={i}
               className={
-                'text-5xl ' +
+                'text-3xl md:text-5xl ' +
                 (i < stars[currentLevelIndex]
                   ? 'text-brandGold'
                   : 'text-white/10')
@@ -62,19 +62,19 @@ const WinOverlay = () => {
         </div>
 
         {isEndScreen && (
-          <div className="mb-12">
-            <div className="text-5xl font-black text-brandGold mb-2 leading-none">
+          <div className="mb-10 md:mb-12">
+            <div className="text-4xl md:text-5xl font-black text-brandGold mb-2 leading-none font-sans">
               {totalStars} / 25
             </div>
-            <div className="text-xs font-bold tracking-[0.3em] opacity-60 uppercase text-white">
+            <div className="text-[10px] md:text-xs font-bold tracking-[0.3em] opacity-60 uppercase text-white">
               {getRankMessage(totalStars)}
             </div>
           </div>
         )}
 
-        {!isEndScreen && <div className="mb-12" />}
+        {!isEndScreen && <div className="mb-10 md:mb-12" />}
 
-        <div className="flex flex-col gap-4 items-center">
+        <div className="flex flex-col gap-3 md:gap-4 items-center">
           <button
             onClick={() => {
               if (isPerfectScore) {
@@ -86,7 +86,7 @@ const WinOverlay = () => {
               }
             }}
             className={
-              'w-full py-5 bg-brandRed rounded-full font-black uppercase tracking-widest shadow-2xl hover:scale-105 transition-all text-sm text-white ' +
+              'w-full py-4 md:py-5 bg-brandRed rounded-full font-black uppercase tracking-widest shadow-2xl hover:scale-105 transition-all text-xs md:text-sm text-white ' +
               (isPerfectScore ? 'hidden' : 'block')
             }
           >

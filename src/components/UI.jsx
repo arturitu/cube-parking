@@ -19,7 +19,7 @@ const UI = () => {
       <LevelHeader />
 
       {/* Restart Button & Footer */}
-      <div className="mt-auto flex flex-col items-center pb-4 gap-10">
+      <div className="mt-auto flex flex-col items-center pb-4 md:pb-8 gap-6 md:gap-10">
         <RestartButton />
         <Footer />
       </div>
