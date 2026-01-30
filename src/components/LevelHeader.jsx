@@ -23,7 +23,7 @@ const LevelHeader = () => {
         <div className="text-xs uppercase tracking-[0.6em] font-bold text-brandGold mb-4">
           Level {currentLevel.id}
         </div>
-        <h2 className="text-6xl font-serif italic text-white leading-tight drop-shadow-lg">
+        <h2 className="text-4xl font-serif italic text-white leading-tight drop-shadow-lg">
           {currentLevel.name}
         </h2>
       </div>

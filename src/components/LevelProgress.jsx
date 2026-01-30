@@ -8,7 +8,7 @@ const LevelProgress = () => {
   const setCurrentLevel = useStore((state) => state.setCurrentLevel)
 
   return (
-    <div className="flex justify-center items-center gap-4 py-4 border-y border-white/10">
+    <div className="flex justify-center items-center gap-4 py-6">
       {levelsData.map((level, index) => {
         const isSelected = currentLevelIndex === index
         const isCompleted = completedLevels.includes(index)
@@ -33,25 +33,33 @@ const LevelProgress = () => {
             `}
           >
             <span
-              className={`text-xl font-black ${
+              className={`text-2xl font-black mb-1 ${
                 isSelected ? 'text-white' : 'text-white/80'
               }`}
             >
               {level.id}
             </span>
 
-            {/* Stars or visual for completion */}
-            <div className="absolute -bottom-1 flex gap-1">
-              {isCompleted
-                ? [...Array(levelStars)].map((_, i) => (
-                    <div
-                      key={i}
-                      className="w-2 h-2 bg-brandGold rounded-full shadow-sm shadow-brandGold/50"
-                    />
-                  ))
-                : isSelected && (
-                    <div className="w-6 h-1 bg-white rounded-full opacity-50" />
-                  )}
+            {/* Stars or visual for completion inside the box */}
+            <div className="absolute bottom-2 flex justify-center w-full gap-[3px]">
+              {isCompleted ? (
+                [...Array(5)].map((_, i) => (
+                  <div
+                    key={i}
+                    className={`w-1.5 h-1.5 rounded-full ${
+                      i < levelStars
+                        ? 'bg-brandGold shadow-[0_0_4px_rgba(241,196,15,0.6)]'
+                        : 'bg-white/10'
+                    }`}
+                  />
+                ))
+              ) : (
+                <div
+                  className={`w-7 h-1.5 rounded-full ${
+                    isSelected ? 'bg-black/20' : 'bg-white/5'
+                  }`}
+                />
+              )}
             </div>
           </button>
         )
