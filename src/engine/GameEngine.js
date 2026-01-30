@@ -152,12 +152,36 @@ export default class GameEngine {
       this.boardGroup.add(wallPartBottom)
     }
 
-    // Create Blocks
-    this.blocks = level.blocks.map((data) => {
-      const block = new Block(data, this.gridWidth, this.gridHeight)
-      this.boardGroup.add(block.group)
+    // Create Blocks logic
+    const blockCount = level.blocks.length
+    const boxGeo = new THREE.BoxGeometry(1, 1, 1)
+    const blockMat = new THREE.MeshStandardMaterial()
+    const indicatorMat = new THREE.MeshStandardMaterial({
+      color: '#ffffff',
+      transparent: true,
+      opacity: 0.3,
+    })
+
+    this.blockMesh = new THREE.InstancedMesh(boxGeo, blockMat, blockCount)
+    this.indicatorMesh = new THREE.InstancedMesh(
+      boxGeo,
+      indicatorMat,
+      blockCount
+    )
+
+    this.blockMesh.castShadow = true
+    this.blockMesh.receiveShadow = true
+
+    this.blocks = level.blocks.map((data, i) => {
+      const block = new Block(data, this.gridWidth, this.gridHeight, i)
+      this.blockMesh.setMatrixAt(i, block.getMatrix())
+      this.blockMesh.setColorAt(i, new THREE.Color(data.color))
+      this.indicatorMesh.setMatrixAt(i, block.getIndicatorMatrix())
       return block
     })
+
+    this.boardGroup.add(this.blockMesh)
+    this.boardGroup.add(this.indicatorMesh)
   }
 
   setupStoreSubscriptions() {
@@ -184,28 +208,17 @@ export default class GameEngine {
       this.mouse.y = -(e.clientY / window.innerHeight) * 2 + 1
 
       this.raycaster.setFromCamera(this.mouse, this.camera)
-      const blockGroups = this.blocks.map((b) => b.group)
-      const intersects = this.raycaster.intersectObjects(blockGroups, true)
+      const intersects = this.raycaster.intersectObject(this.blockMesh)
 
       if (intersects.length > 0) {
-        let object = intersects[0].object
-        while (object && !blockGroups.includes(object)) {
-          object = object.parent
-        }
+        const instanceId = intersects[0].instanceId
+        this.selectedBlock = this.blocks[instanceId]
+        this.isDragging = true
 
-        const block = this.blocks.find((b) => b.group === object)
-
-        if (block) {
-          this.selectedBlock = block
-          this.isDragging = true
-
-          const intersection = new THREE.Vector3()
-          this.raycaster.ray.intersectPlane(this.dragPlane, intersection)
-          this.dragOffset
-            .copy(intersection)
-            .sub(this.selectedBlock.group.position)
-          this.initialBlockPos.copy(this.selectedBlock.group.position)
-        }
+        const intersection = new THREE.Vector3()
+        this.raycaster.ray.intersectPlane(this.dragPlane, intersection)
+        this.dragOffset.copy(intersection).sub(this.selectedBlock.position)
+        this.initialBlockPos.copy(this.selectedBlock.position)
       }
     }
 
@@ -222,12 +235,35 @@ export default class GameEngine {
       if (this.raycaster.ray.intersectPlane(this.dragPlane, intersection)) {
         const targetPos = intersection.sub(this.dragOffset)
         this.moveBlock(this.selectedBlock, targetPos)
+
+        // Sync instanced meshes
+        this.blockMesh.setMatrixAt(
+          this.selectedBlock.index,
+          this.selectedBlock.getMatrix()
+        )
+        this.indicatorMesh.setMatrixAt(
+          this.selectedBlock.index,
+          this.selectedBlock.getIndicatorMatrix()
+        )
+        this.blockMesh.instanceMatrix.needsUpdate = true
+        this.indicatorMesh.instanceMatrix.needsUpdate = true
       }
     }
 
     this.onPointerUp = () => {
       if (this.selectedBlock) {
         const moved = this.selectedBlock.snapToGrid()
+
+        this.blockMesh.setMatrixAt(
+          this.selectedBlock.index,
+          this.selectedBlock.getMatrix()
+        )
+        this.indicatorMesh.setMatrixAt(
+          this.selectedBlock.index,
+          this.selectedBlock.getIndicatorMatrix()
+        )
+        this.blockMesh.instanceMatrix.needsUpdate = true
+        this.indicatorMesh.instanceMatrix.needsUpdate = true
 
         if (moved) {
           useStore.getState().incrementMoves()
@@ -251,12 +287,12 @@ export default class GameEngine {
     if (isH) {
       const minX = -this.gridWidth / 2 + len / 2
       const maxX = this.gridWidth / 2 - len / 2 + (block.data.isTarget ? 2 : 0)
-      block.group.position.x = Math.max(minX, Math.min(maxX, targetPos.x))
+      block.position.x = Math.max(minX, Math.min(maxX, targetPos.x))
       this.constrainCollision(block, 'x')
     } else {
       const minZ = -this.gridHeight / 2 + len / 2
       const maxZ = this.gridHeight / 2 - len / 2
-      block.group.position.z = Math.max(minZ, Math.min(maxZ, targetPos.z))
+      block.position.z = Math.max(minZ, Math.min(maxZ, targetPos.z))
       this.constrainCollision(block, 'z')
     }
   }
@@ -272,16 +308,16 @@ export default class GameEngine {
 
       if (this.intersects(b1, b2)) {
         if (axis === 'x') {
-          if (block.group.position.x > other.group.position.x) {
-            block.group.position.x = b2.max.x + block.data.length / 2
+          if (block.position.x > other.position.x) {
+            block.position.x = b2.max.x + block.data.length / 2
           } else {
-            block.group.position.x = b2.min.x - block.data.length / 2
+            block.position.x = b2.min.x - block.data.length / 2
           }
         } else {
-          if (block.group.position.z > other.group.position.z) {
-            block.group.position.z = b2.max.z + block.data.length / 2
+          if (block.position.z > other.position.z) {
+            block.position.z = b2.max.z + block.data.length / 2
           } else {
-            block.group.position.z = b2.min.z - block.data.length / 2
+            block.position.z = b2.min.z - block.data.length / 2
           }
         }
       }
