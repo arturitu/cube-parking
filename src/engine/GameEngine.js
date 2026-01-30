@@ -89,29 +89,67 @@ export default class GameEngine {
     gridHelper.position.y = 0.01
     this.boardGroup.add(gridHelper)
 
-    // Walls (optional visual)
+    // Walls
     const wallMat = new THREE.MeshStandardMaterial({
-      color: '#5a5a5a',
-      transparent: true,
-      opacity: 0.5,
+      color: '#4a4349',
     })
     const wallThick = 0.2
+    const wallHeight = 0.75
+
+    // Top Wall
+    const topWall = new THREE.Mesh(
+      new THREE.BoxGeometry(width + wallThick * 2, wallHeight, wallThick),
+      wallMat
+    )
+    topWall.position.set(0, wallHeight / 2, -height / 2 - wallThick / 2)
+    this.boardGroup.add(topWall)
+
+    // Bottom Wall
+    const bottomWall = new THREE.Mesh(
+      new THREE.BoxGeometry(width + wallThick * 2, wallHeight, wallThick),
+      wallMat
+    )
+    bottomWall.position.set(0, wallHeight / 2, height / 2 + wallThick / 2)
+    this.boardGroup.add(bottomWall)
 
     // Left Wall
     const leftWall = new THREE.Mesh(
-      new THREE.BoxGeometry(wallThick, 1, height),
+      new THREE.BoxGeometry(wallThick, wallHeight, height),
       wallMat
     )
-    leftWall.position.set(-width / 2 - wallThick / 2, 0.5, 0)
+    leftWall.position.set(-width / 2 - wallThick / 2, wallHeight / 2, 0)
     this.boardGroup.add(leftWall)
 
-    // Right Wall (with exit)
-    const exitY = level.blocks.find((b) => b.isTarget).y
-    const exitHeight = 1
-    const wallRightGeo = new THREE.BoxGeometry(wallThick, 1, height)
-    const rightWall = new THREE.Mesh(wallRightGeo, wallMat)
-    rightWall.position.set(width / 2 + wallThick / 2, 0.5, 0)
-    // For now skip holes for simplicity, just visual
+    // Right Wall (with exit gap)
+    const targetBlockData = level.blocks.find((b) => b.isTarget)
+    const exitRow = targetBlockData.y
+
+    if (exitRow > 0) {
+      const wallPartTop = new THREE.Mesh(
+        new THREE.BoxGeometry(wallThick, wallHeight, exitRow),
+        wallMat
+      )
+      wallPartTop.position.set(
+        width / 2 + wallThick / 2,
+        wallHeight / 2,
+        -height / 2 + exitRow / 2
+      )
+      this.boardGroup.add(wallPartTop)
+    }
+
+    if (exitRow + 1 < height) {
+      const bottomHeight = height - (exitRow + 1)
+      const wallPartBottom = new THREE.Mesh(
+        new THREE.BoxGeometry(wallThick, wallHeight, bottomHeight),
+        wallMat
+      )
+      wallPartBottom.position.set(
+        width / 2 + wallThick / 2,
+        wallHeight / 2,
+        height / 2 - bottomHeight / 2
+      )
+      this.boardGroup.add(wallPartBottom)
+    }
 
     // Create Blocks
     this.blocks = []
@@ -123,8 +161,10 @@ export default class GameEngine {
   }
 
   createBlock(data) {
-    const { length, orientation, color, x, y, id } = data
+    const { length, orientation, color, x, y } = data
     const isHorizontal = orientation === 'horizontal'
+
+    const group = new THREE.Group()
 
     const w = isHorizontal ? length : 0.95
     const h = 0.95
@@ -136,16 +176,31 @@ export default class GameEngine {
 
     mesh.castShadow = true
     mesh.receiveShadow = true
+    group.add(mesh)
 
-    // Position
-    // Grid relative to center: x is left-to-right, y is top-to-bottom (which is z in 3D)
-    mesh.position.x = x - this.gridWidth / 2 + (isHorizontal ? length / 2 : 0.5)
-    mesh.position.y = 0.5
-    mesh.position.z =
+    // Position the Group
+    group.position.x =
+      x - this.gridWidth / 2 + (isHorizontal ? length / 2 : 0.5)
+    group.position.y = 0.5
+    group.position.z =
       y - this.gridHeight / 2 + (isHorizontal ? 0.5 : length / 2)
 
-    mesh.userData = { ...data }
-    return mesh
+    group.userData = { ...data }
+
+    // Visual direction indicator (Handle/Stripe)
+    const indicatorGeo = isHorizontal
+      ? new THREE.BoxGeometry(length * 0.8, 0.1, 0.1)
+      : new THREE.BoxGeometry(0.1, 0.1, length * 0.8)
+    const indicatorMat = new THREE.MeshStandardMaterial({
+      color: '#ffffff',
+      transparent: true,
+      opacity: 0.3,
+    })
+    const indicator = new THREE.Mesh(indicatorGeo, indicatorMat)
+    indicator.position.y = 0.51
+    group.add(indicator)
+
+    return group
   }
 
   setupStoreSubscriptions() {
@@ -172,16 +227,24 @@ export default class GameEngine {
       this.mouse.y = -(e.clientY / window.innerHeight) * 2 + 1
 
       this.raycaster.setFromCamera(this.mouse, this.camera)
-      const intersects = this.raycaster.intersectObjects(this.blocks)
+      const intersects = this.raycaster.intersectObjects(this.blocks, true)
 
       if (intersects.length > 0) {
-        this.selectedBlock = intersects[0].object
-        this.isDragging = true
+        let block = intersects[0].object
+        // Find the parent group which is in our blocks array
+        while (block && !this.blocks.includes(block)) {
+          block = block.parent
+        }
 
-        const intersection = new THREE.Vector3()
-        this.raycaster.ray.intersectPlane(this.dragPlane, intersection)
-        this.dragOffset.copy(intersection).sub(this.selectedBlock.position)
-        this.initialBlockPos.copy(this.selectedBlock.position)
+        if (block) {
+          this.selectedBlock = block
+          this.isDragging = true
+
+          const intersection = new THREE.Vector3()
+          this.raycaster.ray.intersectPlane(this.dragPlane, intersection)
+          this.dragOffset.copy(intersection).sub(this.selectedBlock.position)
+          this.initialBlockPos.copy(this.selectedBlock.position)
+        }
       }
     }
 
